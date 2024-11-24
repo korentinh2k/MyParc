@@ -3,96 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion V2</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f4f4f9;
-    }
-    .login-container {
-      background-color: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .input-field {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    .button {
-      width: 100%;
-      padding: 10px;
-      background-color: #007bff;
-      border: none;
-      color: white;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .button:hover {
-      background-color: #0056b3;
-    }
-    .error {
-      color: red;
-      font-size: 14px;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="login-container">
-    <h2>Connexion V2</h2>
-    <form id="loginForm">
-      <input type="email" id="email" class="input-field" placeholder="Email" required>
-      <input type="password" id="password" class="input-field" placeholder="Mot de passe" required>
-      <button type="submit" class="button">Se connecter</button>
-      <div class="error" id="errorMessage"></div>
-    </form>
-  </div>
+  <title>Connexion à MyParc</title>
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
+      authDomain: "myparc.firebaseapp.com",
+      projectId: "myparc",
+      storageBucket: "myparc.firebasestorage.app",
+      messagingSenderId: "668679679961",
+      appId: "1:668679679961:web:a0b390a197f0304308f3c8",
+      measurementId: "G-FZHRNWXXCS"
+    };
 
-  <script>
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+
+    // Fonction de connexion
     document.getElementById("loginForm").addEventListener("submit", function(event) {
       event.preventDefault();
       
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      // Requête à l'API Google Apps Script pour vérifier la connexion
-      fetch('https://script.google.com/macros/s/AKfycbw5Kii7jke9r5C6eqYc-UfcfYDUGLUzCq5J9wx2dsRQ7I9R81DkkhwqH3sV4-XM4Ppg5g/exec', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email, password: password }),
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          // Si la connexion réussie, rediriger vers "accueil.html"
-          window.location.href = "accueil.html";
-        } else {
-          // Afficher le message d'erreur
-          document.getElementById("errorMessage").textContent = data.message;
-        }
-      })
-      .catch(error => {
-        console.error("Erreur de connexion:", error);
-        document.getElementById("errorMessage").textContent = "Erreur interne. Veuillez réessayer.";
-      });
+      // Connexion avec Firebase
+      signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // Connexion réussie
+          const user = userCredential.user;
+          console.log("Utilisateur connecté : ", user.email);
+          window.location.href = "accueil.html"; // Rediriger vers la page d'accueil
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          alert("Erreur de connexion : " + errorMessage); // Afficher l'erreur
+        });
     });
   </script>
+
+  <!-- CSS pour rendre la page jolie et responsive -->
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f7fc;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background-color: white;
+      padding: 20px 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    label {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .error-message {
+      color: red;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* Responsive design */
+    @media (max-width: 600px) {
+      .login-container {
+        padding: 15px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      input, button {
+        font-size: 14px;
+      }
+    }
+  </style>
+
+</head>
+<body>
+
+  <div class="login-container">
+    <h2>Connexion à MyParc</h2>
+    <form id="loginForm">
+      <label for="email">Email :</label>
+      <input type="email" id="email" placeholder="Entrez votre email" required>
+      
+      <label for="password">Mot de passe :</label>
+      <input type="password" id="password" placeholder="Entrez votre mot de passe" required>
+      
+      <button type="submit">Se connecter</button>
+    </form>
+    <div class="error-message" id="error-message"></div>
+  </div>
+
 </body>
 </html>
