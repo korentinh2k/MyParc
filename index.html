@@ -3,121 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mon Parc - Connexion</title>
+  <title>Connexion</title>
   <style>
-    /* CSS pour la mise en page responsive */
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
+      background-color: #f4f4f9;
     }
     .login-container {
-      background-color: #ffffff;
-      padding: 20px;
+      background-color: white;
+      padding: 30px;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
     }
     h2 {
       text-align: center;
       margin-bottom: 20px;
     }
-    input {
+    .input-field {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
-    button {
+    .button {
       width: 100%;
       padding: 10px;
-      background-color: #4CAF50;
-      color: white;
+      background-color: #007bff;
       border: none;
-      border-radius: 4px;
+      color: white;
+      border-radius: 5px;
       font-size: 16px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #45a049;
+    .button:hover {
+      background-color: #0056b3;
     }
     .error {
       color: red;
+      font-size: 14px;
       text-align: center;
-      margin-top: 10px;
-    }
-    .success {
-      color: green;
-      text-align: center;
-      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-
   <div class="login-container">
     <h2>Connexion</h2>
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Mot de passe" required>
-    <button onclick="login()">Se connecter</button>
-    <div id="message" class="error"></div>
+    <form id="loginForm">
+      <input type="email" id="email" class="input-field" placeholder="Email" required>
+      <input type="password" id="password" class="input-field" placeholder="Mot de passe" required>
+      <button type="submit" class="button">Se connecter</button>
+      <div class="error" id="errorMessage"></div>
+    </form>
   </div>
 
   <script>
-    function login() {
-      // Récupérer les données du formulaire
-      var email = document.getElementById('email').value;
-      var password = document.getElementById('password').value;
+    document.getElementById("loginForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
-      // Vérifier que l'email et le mot de passe ne sont pas vides
-      if (!email || !password) {
-        document.getElementById('message').textContent = "Veuillez remplir tous les champs.";
-        return;
-      }
-
-      // Créer l'objet de données pour l'API
-      var data = {
-        email: email,
-        password: password
-      };
-
-      // Envoyer les données via fetch à l'URL du script Google Apps
-      fetch('https://script.google.com/macros/s/AKfycbyjP4aS6BRTefrpNSIPaWdwod4ldg91hTH_lQBX2DsTadFvCn6fCrVFCA9EjKFIHlHryg/exec', {
+      // Requête à l'API Google Apps Script pour vérifier la connexion
+      fetch('https://script.google.com/macros/s/AKfycbyPnDjoV0ylbU2SXFT8cit5-rWKyzMxsY2cbvpfx2nUUGT6QGKXo2WX4XiOCJ-j955DYg/exec', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ email: email, password: password }),
       })
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          // Connexion réussie
-          document.getElementById('message').className = 'success';
-          document.getElementById('message').textContent = "Connexion réussie!";
-          // Rediriger vers une autre page ou afficher autre contenu ici
-          window.location.href = "accueil.html";  // Remplacez par la page à rediriger après succès
+          // Si la connexion réussie, rediriger vers "accueil.html"
+          window.location.href = "accueil.html";
         } else {
-          // Erreur de connexion
-          document.getElementById('message').className = 'error';
-          document.getElementById('message').textContent = data.message;
+          // Afficher le message d'erreur
+          document.getElementById("errorMessage").textContent = data.message;
         }
       })
       .catch(error => {
-        console.error('Erreur de connexion:', error);
-        document.getElementById('message').className = 'error';
-        document.getElementById('message').textContent = "Erreur lors de la connexion.";
+        console.error("Erreur de connexion:", error);
+        document.getElementById("errorMessage").textContent = "Erreur interne. Veuillez réessayer.";
       });
-    }
+    });
   </script>
-
 </body>
 </html>
