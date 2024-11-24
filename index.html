@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Connexion</h2>
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Mot de passe" required>
+            <button type="submit">Se connecter</button>
+        </form>
+        <p id="errorMessage" class="error"></p>
+    </div>
+
+    <script>
+        // Lorsque le formulaire est soumis
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();  // Empêche la page de se recharger
+
+            // Récupérer les valeurs des champs email et mot de passe
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // Vérification des champs
+            if (!email || !password) {
+                document.getElementById('errorMessage').textContent = "Email et mot de passe sont requis.";
+                return;
+            }
+
+            // Envoi de la requête POST à Google Apps Script
+            fetch('https://script.google.com/macros/s/AKfycbywYfAGCxUYUtZNV_8Jj8-eybV3YTykjESdjNbr8ypvtqRuENDPIpLRAKxcgI80xOroWw/exec', {
+                method: 'POST',
+                body: JSON.stringify({ email: email, password: password }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Si la connexion est réussie
+                if (data.success) {
+                    alert("Connexion réussie !");
+                    window.location.href = 'dashboard.html';  // Redirigez vers votre tableau de bord (exemple)
+                } else {
+                    // Affichage de l'erreur
+                    document.getElementById('errorMessage').textContent = "Échec de la connexion : " + data.message;
+                }
+            })
+            .catch(error => {
+                console.error("Erreur de connexion :", error);
+                document.getElementById('errorMessage').textContent = "Erreur de connexion. Veuillez réessayer.";
+            });
+        });
+    </script>
+</body>
+</html>
