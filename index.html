@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion à MyParc</title>
+  <link rel="stylesheet" href="style.css">
   <!-- Firebase SDK -->
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    
+
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
@@ -30,7 +31,7 @@
     // Fonction de connexion
     document.getElementById("loginForm").addEventListener("submit", function(event) {
       event.preventDefault();
-      
+
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
@@ -49,92 +50,8 @@
         });
     });
   </script>
-
-  <!-- CSS pour rendre la page jolie et responsive -->
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f7fc;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-
-    .login-container {
-      background-color: white;
-      padding: 20px 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    label {
-      font-size: 14px;
-      color: #333;
-      margin-bottom: 5px;
-      display: block;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .error-message {
-      color: red;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    /* Responsive design */
-    @media (max-width: 600px) {
-      .login-container {
-        padding: 15px;
-      }
-
-      h2 {
-        font-size: 20px;
-      }
-
-      input, button {
-        font-size: 14px;
-      }
-    }
-  </style>
-
 </head>
 <body>
-
   <div class="login-container">
     <h2>Connexion à MyParc</h2>
     <form id="loginForm">
@@ -148,6 +65,5 @@
     </form>
     <div class="error-message" id="error-message"></div>
   </div>
-
 </body>
 </html>

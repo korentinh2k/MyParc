@@ -4,195 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajouter un entretien - MyParc</title>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-
-        // Configuration Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
-            authDomain: "myparc.firebaseapp.com",
-            projectId: "myparc",
-            storageBucket: "myparc.appspot.com",
-            messagingSenderId: "668679679961",
-            appId: "1:668679679961:web:a0b390a197f0304308f3c8",
-            measurementId: "G-FZHRNWXXCS"
-        };
-
-        // Initialisation Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        let currentUserUID = null; // Stocke l'UID de l'utilisateur connecté
-        let vehicleId = new URLSearchParams(window.location.search).get('vehicleId'); // Récupérer l'ID du véhicule de l'URL
-
-        // Fonction pour afficher la marque et le modèle du véhicule
-        async function displayVehicleDetails() {
-            const vehicleTitle = document.getElementById("vehicleTitle");
-
-            try {
-                if (!vehicleId) {
-                    vehicleTitle.innerText = "Entretien(s) du véhicule : Aucun ID fourni.";
-                    return;
-                }
-
-                // Récupérer les détails du véhicule depuis Firestore
-                const vehicleDoc = await getDoc(doc(db, "vehicles", vehicleId));
-
-                if (vehicleDoc.exists()) {
-                    const vehicleData = vehicleDoc.data();
-                    const vehicleName = `${vehicleData.marque || "Marque inconnue"} ${vehicleData.modele || "Modèle inconnu"}`;
-                    vehicleTitle.innerText = `Entretien(s) du véhicule : ${vehicleName}`;
-                } else {
-                    vehicleTitle.innerText = "Entretien(s) du véhicule : Véhicule introuvable.";
-                }
-            } catch (error) {
-                console.error("Erreur lors de la récupération des détails du véhicule :", error);
-                vehicleTitle.innerText = "Entretien(s) du véhicule : Erreur.";
-            }
-        }
-
-        // Fonction pour ajouter un entretien
-        async function addMaintenance() {
-            const date = document.getElementById('date').value;
-            const description = document.getElementById('description').value;
-
-            if (date && description) {
-                try {
-                    if (!vehicleId) {
-                        alert("ID du véhicule manquant.");
-                        return;
-                    }
-
-                    const maintenanceData = {
-                        date: date,
-                        description: description,
-                        vehicleId: vehicleId,
-                        createdAt: new Date()
-                    };
-
-                    // Ajouter l'entretien dans la collection "maintenance"
-                    await addDoc(collection(db, "maintenance"), maintenanceData);
-
-                    alert("Entretien ajouté avec succès !");
-
-                    // Rediriger vers la page de la liste des entretiens
-                    window.location.href = `listEntretien.html?vehicleId=${vehicleId}`;
-                } catch (error) {
-                    console.error("Erreur lors de l'ajout de l'entretien :", error);
-                    alert("Impossible d'ajouter l'entretien.");
-                }
-            } else {
-                alert("Veuillez remplir tous les champs.");
-            }
-        }
-
-        // Authentification et vérification de l'utilisateur
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUserUID = user.uid; // Récupérer l'UID de l'utilisateur connecté
-                displayVehicleDetails(); // Afficher les détails du véhicule
-            } else {
-                alert("Vous n'êtes pas connecté.");
-                window.location.href = "index.html";
-            }
-        });
-
-        // Exposer la fonction au contexte global pour qu'elle soit accessible via onclick
-        window.addMaintenance = addMaintenance;
-    </script>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
-        }
-
-        header {
-            background-color: #007bff;
-            color: #fff;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .logout {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .logout:hover {
-            text-decoration: underline;
-        }
-
-        main {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        button.add-maintenance {
-            display: block;
-            width: 200px;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        button.add-maintenance:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="entretien.js"></script>
 </head>
 <body>
+    <!-- En-tête -->
     <header>
         <h1 id="vehicleTitle">Chargement...</h1>
-        <button class="logout" onclick="window.location.href = 'listEntretien.html?vehicleId=${vehicleId}';">Retour à la liste des entretiens</button>
+        <button class="back-button" onclick="redirectToList()">Retour à la liste</button>
     </header>
-    <main>
+
+    <!-- Contenu principal -->
+    <main class="container">
         <form id="maintenanceForm" onsubmit="event.preventDefault(); addMaintenance();">
+            <h2>Ajouter un entretien</h2>
             <label for="date">Date de l'entretien :</label>
             <input type="date" id="date" required>
 

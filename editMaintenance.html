@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier l'entretien - MyParc</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
+            authDomain: "myparc.firebaseapp.com",
+            projectId: "myparc",
+            storageBucket: "myparc.appspot.com",
+            messagingSenderId: "668679679961",
+            appId: "1:668679679961:web:a0b390a197f0304308f3c8",
+            measurementId: "G-FZHRNWXXCS"
+        };
+
+        // Initialisation Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let maintenanceId = new URLSearchParams(window.location.search).get('maintenanceId'); // Récupérer l'ID de l'entretien de l'URL
+
+        // Fonction pour charger les détails de l'entretien
+        async function loadMaintenanceDetails() {
+            const descriptionField = document.getElementById("description");
+            const dateField = document.getElementById("date");
+
+            if (!maintenanceId) {
+                alert("ID de l'entretien manquant.");
+                return;
+            }
+
+            try {
+                const maintenanceDoc = await getDoc(doc(db, "maintenance", maintenanceId));
+                if (maintenanceDoc.exists()) {
+                    const maintenanceData = maintenanceDoc.data();
+                    descriptionField.value = maintenanceData.description || '';
+                    dateField.value = maintenanceData.date ? maintenanceData.date.toDate().toLocaleDateString('fr-FR') : '';
+                } else {
+                    console.error("Entretien introuvable avec l'ID:", maintenanceId);
+                    alert("Entretien introuvable.");
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement de l'entretien:", error);
+                alert("Erreur lors du chargement de l'entretien.");
+            }
+        }
+
+        // Fonction pour mettre à jour l'entretien
+        async function updateMaintenance() {
+            const description = document.getElementById("description").value;
+            const date = document.getElementById("date").value;
+
+            if (!description || !date) {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            try {
+                const maintenanceRef = doc(db, "maintenance", maintenanceId);
+                await updateDoc(maintenanceRef, {
+                    description: description,
+                    date: new Date(date)
+                });
+
+                alert("Entretien mis à jour avec succès.");
+                window.location.href = `listEntretien.html?vehicleId=${maintenanceId}`; // Rediriger vers la liste des entretiens
+            } catch (error) {
+                console.error("Erreur lors de la mise à jour de l'entretien:", error);
+                alert("Erreur lors de la mise à jour de l'entretien.");
+            }
+        }
+
+        // Authentification et initialisation
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                alert("Vous devez être connecté pour accéder à cette page.");
+                window.location.href = "index.html"; // Rediriger vers l'accueil si non connecté
+            } else {
+                loadMaintenanceDetails(); // Charger les détails de l'entretien si connecté
+            }
+        });
+
+        // Exposer la fonction updateMaintenance pour qu'elle soit utilisable via le bouton
+        window.updateMaintenance = updateMaintenance;
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Modifier l'entretien</h1>
+        <button onclick="window.location.href = 'listEntretien.html?vehicleId=' + getUrlParam('vehicleId');">Retour à la liste des entretiens</button>
+    </header>
+
+    <main>
+        <h2>Formulaire de modification de l'entretien</h2>
+        <form id="maintenanceForm">
+            <div class="form-group">
+                <label for="description">Description :</label>
+                <textarea id="description" rows="4" placeholder="Entrez la description de l'entretien..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="date">Date de l'entretien :</label>
+                <input type="date" id="date">
+            </div>
+            <button type="button" onclick="updateMaintenance()">Mettre à jour</button>
+        </form>
+    </main>
+</body>
+</html>
