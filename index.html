@@ -73,6 +73,7 @@
     });
   </script>
 </head>
+
 <body>
   <div class="login-container">
     <h2>Connexion à MyParc</h2>
@@ -84,12 +85,13 @@
       <input type="password" id="password" placeholder="Entrez votre mot de passe" required>
       
       <button type="submit">Se connecter</button>
+      <p>Pas encore de compte ? <a href="#" id="showSignup">Créer un compte</a></p>
     </form>
     
-    <p>Pas encore de compte ? <a href="#" id="showSignup">Créer un compte</a></p>
+
     
     <div id="signupSection" style="display: none;">
-      <h2>Créer un compte</h2>
+      <h2> - Créer un compte - </h2>
       <form id="signupForm">
         <label for="signup-email">Email :</label>
         <input type="email" id="signup-email" placeholder="Entrez votre email" required>
@@ -97,9 +99,10 @@
         <label for="signup-password">Mot de passe :</label>
         <input type="password" id="signup-password" placeholder="Entrez votre mot de passe" required>
         
-        <button type="submit">S'inscrire</button>
+        <button type="logout">S'inscrire</button>
+        <p>Vous avez déjà un compte ? <a href="#" id="showLogin">Se connecter</a></p>
       </form>
-      <p>Vous avez déjà un compte ? <a href="#" id="showLogin">Se connecter</a></p>
+
     </div>
     
     <div class="error-message" id="error-message"></div>
