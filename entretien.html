@@ -1,31 +1,126 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajouter un entretien - MyParc</title>
     <link rel="stylesheet" href="style.css">
-    <script type="module" src="entretien.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // Initialiser Firebase
+        const app = initializeApp({
+            apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
+            authDomain: "myparc.firebaseapp.com",
+            projectId: "myparc",
+            storageBucket: "myparc.appspot.com",
+            messagingSenderId: "668679679961",
+            appId: "1:668679679961:web:a0b390a197f0304308f3c8",
+            measurementId: "G-FZHRNWXXCS"
+        });
+
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let vehicleId = new URLSearchParams(window.location.search).get('vehicleId');
+
+        // Afficher les détails du véhicule
+        async function displayVehicleDetails() {
+            const vehicleTitle = document.getElementById("vehicleTitle");
+
+            try {
+                if (!vehicleId) {
+                    vehicleTitle.innerText = "Aucun ID de véhicule fourni.";
+                    return;
+                }
+
+                const vehicleDoc = await getDoc(doc(db, "vehicles", vehicleId));
+
+                if (vehicleDoc.exists()) {
+                    const vehicleData = vehicleDoc.data();
+                    vehicleTitle.innerText = `Entretien(s) du véhicule : ${vehicleData.name || "Marque inconnue"} ${vehicleData.model || "Modèle inconnu"}`;
+                } else {
+                    vehicleTitle.innerText = "Véhicule introuvable.";
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération des détails du véhicule :", error);
+                vehicleTitle.innerText = "Erreur lors du chargement.";
+            }
+        }
+
+        // Ajouter un entretien
+        async function addMaintenance() {
+            const date = document.getElementById('date').value;
+            const description = document.getElementById('description').value;
+            const nextMileage = document.getElementById('nextMileage').value || null; // Prochaine échéance kilométrique (facultatif)
+            const nextDate = document.getElementById('nextDate').value || null; // Prochaine échéance de date (facultatif)
+
+            if (date && description) {
+                try {
+                    const maintenanceData = {
+                        date: date,
+                        description: description,
+                        vehicleId: vehicleId,
+                        createdAt: new Date(),
+                        nextMileage: nextMileage, // Si non renseigné, sera null
+                        nextDate: nextDate // Si non renseigné, sera null
+                    };
+
+                    await addDoc(collection(db, "maintenance"), maintenanceData);
+
+                    alert("Entretien ajouté avec succès !");
+                    window.location.href = `listEntretien.html?vehicleId=${vehicleId}`;
+                } catch (error) {
+                    console.error("Erreur lors de l'ajout de l'entretien :", error);
+                    alert("Impossible d'ajouter l'entretien.");
+                }
+            } else {
+                alert("Veuillez remplir tous les champs obligatoires.");
+            }
+        }
+
+        // Vérification de l'authentification
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                displayVehicleDetails();
+            } else {
+                alert("Vous devez être connecté.");
+                window.location.href = "index.html";
+            }
+        });
+
+        // Exposer globalement
+        window.addMaintenance = addMaintenance;
+    </script>
 </head>
+
 <body>
-    <!-- En-tête -->
     <header>
         <h1 id="vehicleTitle">Chargement...</h1>
-        <button class="back-button" onclick="redirectToList()">Retour à la liste</button>
+        <button onclick="window.location.href = 'listEntretien.html?vehicleId=' + vehicleId;">Retour</button>
     </header>
-
-    <!-- Contenu principal -->
-    <main class="container">
-        <form id="maintenanceForm" onsubmit="event.preventDefault(); addMaintenance();">
-            <h2>Ajouter un entretien</h2>
-            <label for="date">Date de l'entretien :</label>
+    <main>
+        <form onsubmit="event.preventDefault(); addMaintenance();">
+            <label for="date">Date :</label>
             <input type="date" id="date" required>
 
             <label for="description">Description :</label>
-            <textarea id="description" rows="4" required></textarea>
+            <textarea id="description" required></textarea>
 
-            <button type="submit" class="add-maintenance">Ajouter l'entretien</button>
+            <!-- Nouveau champ pour la prochaine échéance kilométrique -->
+            <label for="nextMileage">Prochaine échéance kilométrique (facultatif) :</label>
+            <input type="number" id="nextMileage" placeholder="Kilométrage" min="0">
+
+            <!-- Nouveau champ pour la prochaine échéance de date -->
+            <label for="nextDate">Prochaine échéance (date) (facultatif) :</label>
+            <input type="date" id="nextDate">
+
+            <button type="submit">Ajouter</button>
         </form>
     </main>
 </body>
+
 </html>

@@ -1,34 +1,399 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des entretiens - MyParc</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="module" src="listEntretien.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        // Configuration Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
+            authDomain: "myparc.firebaseapp.com",
+            projectId: "myparc",
+            storageBucket: "myparc.appspot.com",
+            messagingSenderId: "668679679961",
+            appId: "1:668679679961:web:a0b390a197f0304308f3c8",
+            measurementId: "G-FZHRNWXXCS"
+        };
+
+        // Initialisation Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUserUID = null; // Stocke l'UID de l'utilisateur connecté
+        let vehicleId = new URLSearchParams(window.location.search).get('vehicleId'); // Récupérer l'ID du véhicule de l'URL
+
+        // Fonction pour charger les détails du véhicule
+        async function loadVehicleDetails() {
+            const vehicleTitle = document.getElementById("vehicleTitle");
+
+            try {
+                if (!vehicleId) {
+                    console.error("ID du véhicule manquant.");
+                    vehicleTitle.innerText = "Véhicule introuvable.";
+                    return;
+                }
+
+                // Récupérer les informations du véhicule
+                const vehicleDoc = await getDoc(doc(db, "vehicles", vehicleId));
+                if (vehicleDoc.exists()) {
+                    const vehicleData = vehicleDoc.data();
+                    const vehicleName = `${vehicleData.name || "Marque inconnue"} ${vehicleData.model || "Modèle inconnu"}`;
+                    vehicleTitle.innerText = `Entretien(s) du véhicule : ${vehicleName}`;
+                } else {
+                    vehicleTitle.innerText = "Véhicule introuvable.";
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement des détails du véhicule :", error);
+                vehicleTitle.innerText = "Erreur lors du chargement du véhicule.";
+            }
+        }
+
+        // Fonction pour charger les entretiens du véhicule
+        async function loadMaintenances() {
+            const maintenanceList = document.getElementById("maintenanceList");
+            maintenanceList.innerHTML = ""; // Réinitialiser la liste des entretiens
+
+            try {
+                if (!vehicleId) {
+                    console.error("ID du véhicule manquant.");
+                    return;
+                }
+
+                // Récupérer les entretiens du véhicule spécifique
+                const maintenanceQuery = query(collection(db, "maintenance"), where("vehicleId", "==", vehicleId));
+                const querySnapshot = await getDocs(maintenanceQuery);
+
+                querySnapshot.forEach(docSnapshot => {
+                    const maintenance = docSnapshot.data();
+                    const maintenanceId = docSnapshot.id;
+
+                    let maintenanceDate = "Date inconnue";
+                    if (maintenance.date) {
+                        if (maintenance.date.toDate) {
+                            maintenanceDate = maintenance.date.toDate().toLocaleDateString('fr-FR');
+                        } else if (typeof maintenance.date === "string") {
+                            const dateObject = new Date(maintenance.date);
+                            if (!isNaN(dateObject)) {
+                                maintenanceDate = dateObject.toLocaleDateString('fr-FR');
+                            }
+                        }
+                    }
+
+                    const description = maintenance.description || "Description non disponible";
+
+                    const listItem = document.createElement("li");
+                    listItem.classList.add("maintenance-item");
+                    listItem.innerHTML = `
+                        <div class="maintenance-details">
+                            <p><strong>Date :</strong> ${maintenanceDate}</p>
+                            <p><strong>Description :</strong> ${description}</p>
+                            <p><strong>Prochaine échéance kilométrique :</strong> ${maintenance.nextMileage || "Non spécifiée"}</p>
+                            <p><strong>Prochaine échéance (date) :</strong> ${maintenance.nextDate ? new Date(maintenance.nextDate).toLocaleDateString('fr-FR') : "Non spécifiée"}</p>
+                            <div class="actions">
+                                <button class="edit-btn" onclick="editMaintenance('${maintenanceId}', '${description}', '${maintenanceDate}', '${maintenance.nextMileage || ""}', '${maintenance.nextDate || ""}')">Modifier</button>
+                                <button class="delete-btn" onclick="deleteMaintenance('${maintenanceId}')">Supprimer</button>
+                            </div>
+                        </div>
+                    `;
+                    maintenanceList.appendChild(listItem);
+                });
+
+                if (querySnapshot.empty) {
+                    maintenanceList.innerHTML = `<li class="no-maintenance">Aucun entretien trouvé.</li>`;
+                }
+            } catch (error) {
+                console.error("Erreur lors du chargement des entretiens :", error);
+                alert("Impossible de charger les entretiens. Vérifiez votre connexion.");
+            }
+        }
+
+        // Fonction de déconnexion
+        function logout() {
+            signOut(auth).then(() => {
+                alert("Déconnexion réussie.");
+                window.location.href = "index.html"; // Rediriger vers l'accueil après déconnexion
+            }).catch((error) => {
+                console.error("Erreur lors de la déconnexion :", error);
+                alert("Une erreur est survenue lors de la déconnexion.");
+            });
+        }
+
+        function goToHome() {
+            window.location.href = "accueil.html";
+        }
+
+        // Fonction pour rediriger vers la page d'ajout d'entretien
+        function redirectToAddMaintenance() {
+            if (vehicleId) {
+                window.location.href = `entretien.html?vehicleId=${vehicleId}`;
+            } else {
+                alert("Erreur : ID du véhicule introuvable.");
+            }
+        }
+
+        // Fonction pour afficher le formulaire de modification
+        function editMaintenance(maintenanceId, currentDescription, currentDate, currentNextMileage, currentNextDate) {
+    const maintenanceForm = document.getElementById("maintenanceForm");
+    maintenanceForm.style.display = "block";
+    document.getElementById("editDescription").value = currentDescription;
+
+    // Convertir currentDate au format YYYY-MM-DD si elle existe
+    if (currentDate && !isNaN(Date.parse(currentDate))) {
+        const formattedDate = new Date(currentDate).toISOString().split("T")[0];
+        document.getElementById("editDate").value = formattedDate;
+    } else {
+        document.getElementById("editDate").value = ""; // Vide si date invalide
+    }
+
+    // Convertir currentNextDate au format YYYY-MM-DD si elle existe
+    if (currentNextDate && !isNaN(Date.parse(currentNextDate))) {
+        const formattedNextDate = new Date(currentNextDate).toISOString().split("T")[0];
+        document.getElementById("editNextDate").value = formattedNextDate;
+    } else {
+        document.getElementById("editNextDate").value = ""; // Vide si date invalide
+    }
+
+    document.getElementById("editNextMileage").value = currentNextMileage || "";
+
+    // Masquer la liste des entretiens pour éviter la confusion
+    document.getElementById("maintenanceList").style.display = "none";
+
+    const saveButton = document.getElementById("saveChanges");
+    const cancelButton = document.getElementById("cancelEdit");
+
+    saveButton.onclick = () => saveChanges(maintenanceId); // Appel de la fonction de sauvegarde
+    cancelButton.onclick = () => cancelEdit(); // Appel de la fonction d'annulation
+}
+
+
+        async function saveChanges(maintenanceId) {
+            const description = document.getElementById("editDescription").value;
+            const date = document.getElementById("editDate").value;
+            const nextMileage = document.getElementById("editNextMileage").value || null;
+            const nextDate = document.getElementById("editNextDate").value || null;
+
+            try {
+                const maintenanceRef = doc(db, "maintenance", maintenanceId);
+                await updateDoc(maintenanceRef, {
+                    description: description,
+                    date: new Date(date).toISOString(),
+                    nextMileage: nextMileage,
+                    nextDate: nextDate
+                });
+
+                alert("Entretien mis à jour !");
+                loadMaintenances();
+                cancelEdit();
+            } catch (error) {
+                console.error("Erreur lors de la mise à jour de l'entretien :", error);
+                alert("Erreur lors de la mise à jour de l'entretien.");
+            }
+        }
+
+        function cancelEdit() {
+            document.getElementById("maintenanceForm").style.display = "none";
+            document.getElementById("maintenanceList").style.display = "block";
+        }
+
+        async function deleteMaintenance(maintenanceId) {
+            if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet entretien ?")) return;
+
+            try {
+                const maintenanceRef = doc(db, "maintenance", maintenanceId);
+                await deleteDoc(maintenanceRef);
+
+                alert("Entretien supprimé.");
+                loadMaintenances();
+            } catch (error) {
+                console.error("Erreur lors de la suppression de l'entretien :", error);
+                alert("Erreur lors de la suppression de l'entretien.");
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserUID = user.uid;
+                loadVehicleDetails();
+                loadMaintenances();
+            } else {
+                alert("Vous n'êtes pas connecté.");
+                window.location.href = "index.html";
+            }
+        });
+
+        window.logout = logout;
+        window.redirectToAddMaintenance = redirectToAddMaintenance;
+        window.editMaintenance = editMaintenance;
+        window.deleteMaintenance = deleteMaintenance;
+
+        // Définir goToHome dans le contexte global
+        window.goToHome = function() {
+        window.location.href = "accueil.html";
+        }
+
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f8f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        header button {
+            background-color: #fff;
+            border: none;
+            border-radius: 5px;
+            color: #007bff;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        header button:hover {
+            background-color: #e9ecef;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .maintenance-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .maintenance-item {
+            background-color: #fff;
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .maintenance-details p {
+            margin: 0 0 10px;
+        }
+
+        .actions button {
+            margin-right: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .actions .edit-btn {
+            background-color: #ffc107;
+            color: white;
+        }
+
+        .actions .edit-btn:hover {
+            background-color: #e0a800;
+        }
+
+        .actions .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .actions .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        .no-maintenance {
+            color: #777;
+            text-align: center;
+            font-style: italic;
+        }
+
+        #maintenanceForm {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #maintenanceForm input {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #maintenanceForm button {
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #saveChanges {
+            background-color: #28a745;
+            color: white;
+        }
+
+        #saveChanges:hover {
+            background-color: #218838;
+        }
+
+        #cancelEdit {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        #cancelEdit:hover {
+            background-color: #5a6268;
+        }
+    </style>
 </head>
+
 <body>
-    <!-- En-tête -->
     <header>
         <h1 id="vehicleTitle">Véhicule</h1>
-        <div class="header-buttons">
-            <button class="logout" onclick="logout()">Déconnexion</button>
-            <button class="add-vehicle" onclick="redirectToAddMaintenance()">Ajouter Entretien</button>
-        </div>
+        <button onclick="goToHome()">Retour à l'accueil</button>
+        <button onclick="redirectToAddMaintenance()">Ajouter entretien</button>
+        <button onclick="logout()">Déconnexion</button>
     </header>
-
-    <!-- Contenu principal -->
     <div class="container">
-        <!-- Liste des entretiens -->
-        <ul id="maintenanceList" class="maintenance-list"></ul>
+        <ul id="maintenanceList" class="maintenance-list">
+            <!-- Liste des entretiens -->
+        </ul>
 
-        <!-- Formulaire de modification -->
-        <div id="maintenanceForm" class="form-container hidden">
-            <h2>Modifier l'entretien</h2>
-            <input type="text" id="editDescription" placeholder="Nouvelle description">
+        <!-- Formulaire de modification d'entretien -->
+        <div id="maintenanceForm">
+            <input type="text" id="editDescription" placeholder="Description">
             <input type="date" id="editDate">
-            <button id="saveChanges">Enregistrer</button>
+            <input type="text" id="editNextMileage" placeholder="Prochaine échéance kilométrique">
+            <input type="date" id="editNextDate">
+            <button id="saveChanges">Enregistrer les modifications</button>
+            <button id="cancelEdit" onclick="cancelEdit()">Annuler</button>
         </div>
     </div>
 </body>
+
 </html>

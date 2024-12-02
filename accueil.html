@@ -5,12 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil - MyParc</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 8px;
+        }
+
+        header h1 {
+            font-size: 24px;
+        }
+
+        .logout {
+            background-color: #f44336;
+            border: none;
+            padding: 10px 15px;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .logout:hover {
+            background-color: #d32f2f;
+        }
+
+        main {
+            margin-top: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        ul#vehiclesList {
+            margin: 0;
+        }
+
+        li {
+            background-color: white;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        li span {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .add-vehicle {
+            display: block;
+            margin: 20px auto 0;
+            background-color: #2196F3;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+
+        .add-vehicle:hover {
+            background-color: #1976D2;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            li {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .actions {
+                margin-top: 10px;
+                justify-content: flex-start;
+            }
+        }
+    </style>
     <script type="module">
+        // Script remains unchanged
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
-        // Configuration Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyD1rPEYCjsm04DASULnobVBaLCqWQGYvkw",
             authDomain: "myparc.firebaseapp.com",
@@ -21,7 +148,6 @@
             measurementId: "G-FZHRNWXXCS"
         };
 
-        // Initialisation Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
