@@ -25,13 +25,16 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        let vehicleId = new URLSearchParams(window.location.search).get('vehicleId');
+        // Déclarez vehicleId dans un scope global
+        let vehicleId;
 
         // Afficher les détails du véhicule
         async function displayVehicleDetails() {
             const vehicleTitle = document.getElementById("vehicleTitle");
 
             try {
+                vehicleId = new URLSearchParams(window.location.search).get('vehicleId');
+
                 if (!vehicleId) {
                     vehicleTitle.innerText = "Aucun ID de véhicule fourni.";
                     return;
@@ -45,6 +48,13 @@
                 } else {
                     vehicleTitle.innerText = "Véhicule introuvable.";
                 }
+
+                // Initialiser le bouton de retour après avoir récupéré vehicleId
+                const backButton = document.getElementById("backButton");
+                backButton.onclick = function () {
+                    window.location.href = `listEntretien.html?vehicleId=${vehicleId}`;
+                };
+
             } catch (error) {
                 console.error("Erreur lors de la récupération des détails du véhicule :", error);
                 vehicleTitle.innerText = "Erreur lors du chargement.";
@@ -100,7 +110,7 @@
 <body>
     <header>
         <h1 id="vehicleTitle">Chargement...</h1>
-        <button onclick="window.location.href = 'listEntretien.html?vehicleId=' + vehicleId;">Retour</button>
+        <button id="backButton">Retour</button>
     </header>
     <main>
         <form onsubmit="event.preventDefault(); addMaintenance();">
