@@ -10,7 +10,7 @@
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
     // Firebase configuration
     const firebaseConfig = {
@@ -49,6 +49,28 @@
           alert("Erreur de connexion : " + errorMessage); // Afficher l'erreur
         });
     });
+
+    // Fonction d'inscription
+    document.getElementById("signupForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const email = document.getElementById("signup-email").value;
+      const password = document.getElementById("signup-password").value;
+
+      // Création d'un nouveau compte avec Firebase
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          // Inscription réussie
+          const user = userCredential.user;
+          console.log("Utilisateur créé : ", user.email);
+          window.location.href = "accueil.html"; // Rediriger vers la page d'accueil
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          alert("Erreur d'inscription : " + errorMessage); // Afficher l'erreur
+        });
+    });
   </script>
 </head>
 <body>
@@ -63,7 +85,38 @@
       
       <button type="submit">Se connecter</button>
     </form>
+    
+    <p>Pas encore de compte ? <a href="#" id="showSignup">Créer un compte</a></p>
+    
+    <div id="signupSection" style="display: none;">
+      <h2>Créer un compte</h2>
+      <form id="signupForm">
+        <label for="signup-email">Email :</label>
+        <input type="email" id="signup-email" placeholder="Entrez votre email" required>
+        
+        <label for="signup-password">Mot de passe :</label>
+        <input type="password" id="signup-password" placeholder="Entrez votre mot de passe" required>
+        
+        <button type="submit">S'inscrire</button>
+      </form>
+      <p>Vous avez déjà un compte ? <a href="#" id="showLogin">Se connecter</a></p>
+    </div>
+    
     <div class="error-message" id="error-message"></div>
   </div>
+
+  <script>
+    // Afficher le formulaire d'inscription
+    document.getElementById("showSignup").addEventListener("click", function() {
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("signupSection").style.display = "block";
+    });
+
+    // Afficher le formulaire de connexion
+    document.getElementById("showLogin").addEventListener("click", function() {
+      document.getElementById("signupSection").style.display = "none";
+      document.getElementById("loginForm").style.display = "block";
+    });
+  </script>
 </body>
 </html>
