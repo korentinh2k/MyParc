@@ -94,10 +94,11 @@
                         <div class="maintenance-details">
                             <p><strong>Date :</strong> ${maintenanceDate}</p>
                             <p><strong>Description :</strong> ${description}</p>
-                            <p><strong>Prochaine échéance kilométrique :</strong> ${maintenance.nextMileage || "Non spécifiée"}</p>
-                            <p><strong>Prochaine échéance (date) :</strong> ${maintenance.nextDate ? new Date(maintenance.nextDate).toLocaleDateString('fr-FR') : "Non spécifiée"}</p>
+                            <p><strong>Kilométrage :</strong> ${maintenance.actualMileage || "-"}</p>
+                            <p><strong>Prochaine échéance kilométrique :</strong> ${maintenance.nextMileage || "-"}</p>
+                            <p><strong>Prochaine échéance (date) :</strong> ${maintenance.nextDate ? new Date(maintenance.nextDate).toLocaleDateString('fr-FR') : "-"}</p>
                             <div class="actions">
-                                <button class="edit-btn" onclick="editMaintenance('${maintenanceId}', '${description}', '${maintenanceDate}', '${maintenance.nextMileage || ""}', '${maintenance.nextDate || ""}')">Modifier</button>
+                                <button class="edit-btn" onclick="editMaintenance('${maintenanceId}', '${description}', '${maintenanceDate}', '${maintenance.actualMileage}', '${maintenance.nextMileage || ""}', '${maintenance.nextDate || ""}')">Modifier</button>
                                 <button class="delete-btn" onclick="deleteMaintenance('${maintenanceId}')">Supprimer</button>
                             </div>
                         </div>
@@ -139,10 +140,11 @@
         }
 
         // Fonction pour afficher le formulaire de modification
-        function editMaintenance(maintenanceId, currentDescription, currentDate, currentNextMileage, currentNextDate) {
-    const maintenanceForm = document.getElementById("maintenanceForm");
-    maintenanceForm.style.display = "block";
-    document.getElementById("editDescription").value = currentDescription;
+        function editMaintenance(maintenanceId, currentDescription, currentDate, currentActualMileage, currentNextMileage, currentNextDate) {
+            const maintenanceForm = document.getElementById("maintenanceForm");
+            maintenanceForm.style.display = "block";
+            document.getElementById("editDescription").value = currentDescription;
+    
 
     // Convertir currentDate au format YYYY-MM-DD si elle existe
     if (currentDate && !isNaN(Date.parse(currentDate))) {
@@ -160,6 +162,7 @@
         document.getElementById("editNextDate").value = ""; // Vide si date invalide
     }
 
+    document.getElementById("editActualMileage").value = currentActualMileage || "";
     document.getElementById("editNextMileage").value = currentNextMileage || "";
 
     // Masquer la liste des entretiens pour éviter la confusion
@@ -176,6 +179,7 @@
         async function saveChanges(maintenanceId) {
             const description = document.getElementById("editDescription").value;
             const date = document.getElementById("editDate").value;
+            const actualMileage = document.getElementById("editActualMileage").value || null;
             const nextMileage = document.getElementById("editNextMileage").value || null;
             const nextDate = document.getElementById("editNextDate").value || null;
 
@@ -184,6 +188,7 @@
                 await updateDoc(maintenanceRef, {
                     description: description,
                     date: new Date(date).toISOString(),
+                    actualMileage: actualMileage,
                     nextMileage: nextMileage,
                     nextDate: nextDate
                 });
@@ -456,6 +461,7 @@
         <div id="maintenanceForm">
             <input type="text" id="editDescription" placeholder="Description">
             <input type="date" id="editDate">
+            <input type="text" id="editActualMileage" placeholder="Kilométrage au moment de l'entretien">
             <input type="text" id="editNextMileage" placeholder="Prochaine échéance kilométrique">
             <input type="date" id="editNextDate">
             <button id="saveChanges">Enregistrer les modifications</button>

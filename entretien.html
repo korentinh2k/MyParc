@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
         // Initialiser Firebase
@@ -49,7 +49,6 @@
                     vehicleTitle.innerText = "Véhicule introuvable.";
                 }
 
-                // Initialiser le bouton de retour après avoir récupéré vehicleId
                 const backButton = document.getElementById("backButton");
                 backButton.onclick = function () {
                     window.location.href = `listEntretien.html?vehicleId=${vehicleId}`;
@@ -65,18 +64,26 @@
         async function addMaintenance() {
             const date = document.getElementById('date').value;
             const description = document.getElementById('description').value;
-            const nextMileage = document.getElementById('nextMileage').value || null; // Prochaine échéance kilométrique (facultatif)
-            const nextDate = document.getElementById('nextDate').value || null; // Prochaine échéance de date (facultatif)
+            const actualMileage = document.getElementById('actualMileage').value || null; 
+            const nextMileage = document.getElementById('nextMileage').value || null; 
+            const nextDate = document.getElementById('nextDate').value || null; 
+            const famille = document.getElementById('famille').value;
+            const sousFamille = document.getElementById('sousFamille').value;
+            const element = document.getElementById('element').value;
 
-            if (date && description) {
+            if (date && description && famille && sousFamille && element) {
                 try {
                     const maintenanceData = {
-                        date: date,
-                        description: description,
-                        vehicleId: vehicleId,
+                        date,
+                        description,
+                        famille,
+                        sousFamille,
+                        element,
+                        vehicleId,
+                        actualMileage,
                         createdAt: new Date(),
-                        nextMileage: nextMileage, // Si non renseigné, sera null
-                        nextDate: nextDate // Si non renseigné, sera null
+                        nextMileage,
+                        nextDate
                     };
 
                     await addDoc(collection(db, "maintenance"), maintenanceData);
@@ -88,7 +95,76 @@
                     alert("Impossible d'ajouter l'entretien.");
                 }
             } else {
-                alert("Veuillez remplir tous les champs obligatoires.");
+                alert("Veuillez remplir tous les champs.");
+            }
+        }
+
+        // Fonction pour trier un tableau ou des clés d'objets par ordre alphabétique
+        function sortAlphabetically(array) {
+            return array.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+        }
+
+        // Remplir les menus déroulants avec Firestore
+        async function populateDropdowns() {
+            const familleDropdown = document.getElementById("famille");
+            const sousFamilleDropdown = document.getElementById("sousFamille");
+            const elementDropdown = document.getElementById("element");
+
+            try {
+                const oppCollection = collection(db, "oppETAI");
+                const oppSnapshot = await getDocs(oppCollection);
+
+                const data = {};
+                oppSnapshot.forEach((doc) => {
+                    const { Libfam, Libsfa, LibEle } = doc.data();
+
+                    if (!data[Libfam]) data[Libfam] = {};
+                    if (!data[Libfam][Libsfa]) data[Libfam][Libsfa] = [];
+
+                    data[Libfam][Libsfa].push(LibEle);
+                });
+
+                // Trier les familles par ordre alphabétique et remplir le menu
+                sortAlphabetically(Object.keys(data)).forEach((famille) => {
+                    const option = document.createElement("option");
+                    option.value = famille;
+                    option.textContent = famille;
+                    familleDropdown.appendChild(option);
+                });
+
+                familleDropdown.addEventListener("change", () => {
+                    sousFamilleDropdown.innerHTML = '<option value="" disabled selected>Choisir une sous-famille</option>';
+                    elementDropdown.innerHTML = '<option value="" disabled selected>Choisir un élément</option>';
+
+                    const selectedFamille = familleDropdown.value;
+                    if (selectedFamille) {
+                        // Trier les sous-familles et remplir le menu
+                        sortAlphabetically(Object.keys(data[selectedFamille])).forEach((sousFamille) => {
+                            const option = document.createElement("option");
+                            option.value = sousFamille;
+                            option.textContent = sousFamille;
+                            sousFamilleDropdown.appendChild(option);
+                        });
+                    }
+                });
+
+                sousFamilleDropdown.addEventListener("change", () => {
+                    elementDropdown.innerHTML = '<option value="" disabled selected>Choisir un élément</option>';
+
+                    const selectedFamille = familleDropdown.value;
+                    const selectedSousFamille = sousFamilleDropdown.value;
+                    if (selectedFamille && selectedSousFamille) {
+                        // Trier les éléments et remplir le menu
+                        sortAlphabetically(data[selectedFamille][selectedSousFamille]).forEach((element) => {
+                            const option = document.createElement("option");
+                            option.value = element;
+                            option.textContent = element;
+                            elementDropdown.appendChild(option);
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Erreur lors du remplissage des menus déroulants :", error);
             }
         }
 
@@ -96,13 +172,13 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 displayVehicleDetails();
+                populateDropdowns();
             } else {
                 alert("Vous devez être connecté.");
                 window.location.href = "index.html";
             }
         });
 
-        // Exposer globalement
         window.addMaintenance = addMaintenance;
     </script>
 </head>
@@ -114,18 +190,34 @@
     </header>
     <main>
         <form onsubmit="event.preventDefault(); addMaintenance();">
+            <label for="famille">Famille :</label>
+            <select id="famille" required>
+                <option value="" disabled selected>Choisir une famille</option>
+            </select>
+
+            <label for="sousFamille">Sous-famille :</label>
+            <select id="sousFamille" required>
+                <option value="" disabled selected>Choisir une sous-famille</option>
+            </select>
+
+            <label for="element">Élément :</label>
+            <select id="element" required>
+                <option value="" disabled selected>Choisir un élément</option>
+            </select>
+
             <label for="date">Date :</label>
             <input type="date" id="date" required>
 
             <label for="description">Description :</label>
             <textarea id="description" required></textarea>
 
-            <!-- Nouveau champ pour la prochaine échéance kilométrique -->
-            <label for="nextMileage">Prochaine échéance kilométrique (facultatif) :</label>
-            <input type="number" id="nextMileage" placeholder="Kilométrage" min="0">
+            <label for="actualMileage">Kilométrage :</label>
+            <input type="number" id="actualMileage" min="0">
 
-            <!-- Nouveau champ pour la prochaine échéance de date -->
-            <label for="nextDate">Prochaine échéance (date) (facultatif) :</label>
+            <label for="nextMileage">Prochaine échéance kilométrique :</label>
+            <input type="number" id="nextMileage" min="0">
+
+            <label for="nextDate">Prochaine échéance (date) :</label>
             <input type="date" id="nextDate">
 
             <button type="submit">Ajouter</button>
